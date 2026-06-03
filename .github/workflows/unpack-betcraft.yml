@@ -1,0 +1,44 @@
+name: Unpack BetCraft upload
+
+on:
+  push:
+    paths:
+      - 'BetCraft-upload.zip'
+      - '.github/workflows/unpack-betcraft.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify upload zip exists
+        run: |
+          if [ ! -f BetCraft-upload.zip ]; then
+            echo "BetCraft-upload.zip is missing. Upload it to the repository root and run this workflow again."
+            exit 1
+          fi
+
+      - name: Unpack BetCraft app
+        run: |
+          unzip -o BetCraft-upload.zip
+          rm BetCraft-upload.zip
+
+      - name: Commit unpacked app
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Unpack BetCraft app"
+            git push
+          fi
